@@ -17,21 +17,21 @@ def check_vuln(ip):
         res = sock.recv(nb)
 
         if not res[68:70] == b"\x11\x03":
-        	sock.close()
+            sock.close()
             return("{0} Not vulnerable.".format(ip))
             
         if not res[70:72] == b"\x02\x00":
-        	sock.close()
+            sock.close()
             return("{0} Not vulnerable.".format(ip))
         
         sock.close()
         return("{0} Vulnerable.".format(ip))
     except socket.timeout as err:
-    	sock.close()
+        sock.close()
         return(ip + " " + str(err))
 
     except socket.error as err:
-    	sock.close()
+        sock.close()
         return(ip + " " + str(err))
 def main():
     addr4 = ipaddress.ip_network( sys.argv[1])
