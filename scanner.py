@@ -1,29 +1,33 @@
+#!/usr/bin/env python
 import socket
 import struct
 import sys
-from netaddr import IPNetwork
-
+import argparse
+parser = argparse.ArgumentParser(description="SMBGhost ollypwn", version='0.0.0a')
+parser.add_argument("-p", "--port", default=445, help="SMB listen port")
+parser.add_argument("-i", "--ip", default="127.0.0.1", help="ip to check")
+parser.add_argument("-t", "--timeout", default="3", help="network timeout, use a higher value for slow networks")
+args = parser.parse_args()
+ip = args.ip
+port = args.port
 pkt = b'\x00\x00\x00\xc0\xfeSMB@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00$\x00\x08\x00\x01\x00\x00\x00\x7f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00x\x00\x00\x00\x02\x00\x00\x00\x02\x02\x10\x02"\x02$\x02\x00\x03\x02\x03\x10\x03\x11\x03\x00\x00\x00\x00\x01\x00&\x00\x00\x00\x00\x00\x01\x00 \x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\n\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00'
+sock = socket.socket(socket.AF_INET)
+sock.settimeout(3)
+try:
+  sock.connect((ip, port))
+  sock.send(pkt)
+  nb, = struct.unpack(">I", sock.recv(4))
+  res = sock.recv(nb)
+except (StandardError,struct.error) as e:
+  errMsg = "someError scanning %s on port %s " % (ip, port)
+  # einar se la come toda..
+  errMsg += "error was %s \n" % (str(e))
+  sys.stderr.write(errMsg)
+  sys.exit(1)
 
-subnet = sys.argv[1]
+if not res[68:70] == b"\x11\x03":
+    exit("Not vulnerable " + ip)
+if not res[70:72] == b"\x02\x00":
+    exit("Not vulnerable " + ip)
 
-for ip in IPNetwork(subnet):
-
-    sock = socket.socket(socket.AF_INET)
-    sock.settimeout(3)
-
-    try:
-        sock.connect(( str(ip),  445 ))
-    except:
-        sock.close()
-        continue
-
-    sock.send(pkt)
-
-    nb, = struct.unpack(">I", sock.recv(4))
-    res = sock.recv(nb)
-
-    if res[68:70] != b"\x11\x03" or res[70:72] != b"\x02\x00":
-        print(f"{ip} Not vulnerable.")
-    else:
-        print(f"{ip} Vulnerable")
+exit("Vulnerable " + ip)
