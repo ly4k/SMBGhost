@@ -1,19 +1,40 @@
 import socket
 import struct
 import sys
+import ipaddress
 
 pkt = b'\x00\x00\x00\xc0\xfeSMB@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00$\x00\x08\x00\x01\x00\x00\x00\x7f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00x\x00\x00\x00\x02\x00\x00\x00\x02\x02\x10\x02"\x02$\x02\x00\x03\x02\x03\x10\x03\x11\x03\x00\x00\x00\x00\x01\x00&\x00\x00\x00\x00\x00\x01\x00 \x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\n\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00'
-sock = socket.socket(socket.AF_INET)
-sock.settimeout(3)
-sock.connect(( sys.argv[1],  445 ))
-sock.send(pkt)
 
-nb, = struct.unpack(">I", sock.recv(4))
-res = sock.recv(nb)
 
-if not res[68:70] == b"\x11\x03":
-    exit("Not vulnerable.")
-if not res[70:72] == b"\x02\x00":
-    exit("Not vulnerable.")
+def check_vuln(ip):
+    try:
+        sock = socket.socket(socket.AF_INET)
+        sock.settimeout(3)
+        sock.connect((str(ip),  445 ))
+        sock.send(pkt)
 
-exit("Vulnerable.")
+        nb, = struct.unpack(">I", sock.recv(4))
+        res = sock.recv(nb)
+
+        if not res[68:70] == b"\x11\x03":
+            return("{0} Not vulnerable.".format(ip))
+            
+        if not res[70:72] == b"\x02\x00":
+            return("{0} Not vulnerable.".format(ip))
+            
+
+        return("{0} Vulnerable.".format(ip))
+    except socket.timeout as err:
+        return(ip + " " + str(err))
+
+    except socket.error as err:
+        return(ip + " " + str(err))
+def main():
+    addr4 = ipaddress.ip_network( sys.argv[1])
+
+    for ip in addr4:
+        print (check_vuln(str(ip)))
+
+if __name__ == '__main__':
+    main()
+        
