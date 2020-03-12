@@ -8,7 +8,7 @@ pkt = b'\x00\x00\x00\xc0\xfeSMB@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1f\x00\x00
 subnet = sys.argv[1]
 
 for ip in IPNetwork(subnet):
-
+    print(f"Testing {ip}")
     sock = socket.socket(socket.AF_INET)
     sock.settimeout(3)
 
@@ -16,6 +16,7 @@ for ip in IPNetwork(subnet):
         sock.connect(( str(ip),  445 ))
     except:
         sock.close()
+        print(f"{ip} not available")
         continue
 
     sock.send(pkt)

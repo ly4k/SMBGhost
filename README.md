@@ -10,7 +10,17 @@ A network dump of the scanner running against a Windows 2019 Server (10.0.0.133)
 ## Usage
 `python3 scanner.py <IP>`
 
+You can use networks as IP, for example
+
+`python3 scanner.py 10.0.0.0/24>`
+
+## Requeriments
+
+`pip3 install netaddr`
+
+
 ## Workarounds
+
 [ADV200005 | Microsoft Guidance for Disabling SMBv3 Compression](https://portal.msrc.microsoft.com/en-US/security-guidance/advisory/adv200005)
 
 ```
