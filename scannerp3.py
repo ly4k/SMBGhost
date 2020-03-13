@@ -1,9 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import socket
 import struct
 import sys
+import shutil
 import argparse
-parser = argparse.ArgumentParser(description="SMBGhost ollypwn", version='0.0.0a')
+import uuid
+from subprocess import Popen, PIPE, STDOUT
+
+parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", default=445, help="SMB listen port")
 parser.add_argument("-i", "--ip", default="127.0.0.1", help="ip to check")
 parser.add_argument("-t", "--timeout", default="3", help="network timeout, use a higher value for slow networks")
@@ -18,16 +22,20 @@ try:
   sock.send(pkt)
   nb, = struct.unpack(">I", sock.recv(4))
   res = sock.recv(nb)
-except (StandardError,struct.error) as e:
+except (BaseException,struct.error) as e:
   errMsg = "someError scanning %s on port %s " % (ip, port)
   # einar se la come toda..
-  errMsg += "error was %s \n" % (str(e))
+  errMsg += "error was : %s \n" % (str(e))
   sys.stderr.write(errMsg)
   sys.exit(1)
 
+exitMsg = "NotVulnerable %s\n" % (ip)
 if not res[68:70] == b"\x11\x03":
-    exit("Not vulnerable " + ip)
+  exit(exitMsg)
+  sys.exit(1)
 if not res[70:72] == b"\x02\x00":
-    exit("Not vulnerable " + ip)
+  exit(exitMsg)
+  sys.exit(1)
 
-exit("Vulnerable " + ip)
+exitMsg = "Host with ip %s is vulnerable" % (ip)
+exit(exitMsg)
