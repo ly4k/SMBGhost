@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import socket
+import struct
+import sys
+import shutil
+import argparse
+import uuid
+from subprocess import Popen, PIPE, STDOUT
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-p", "--port", default=445, help="SMB listen port")
+parser.add_argument("-i", "--ip", default="127.0.0.1", help="ip to check")
+parser.add_argument("-t", "--timeout", default="3", help="network timeout, use a higher value for slow networks")
+args = parser.parse_args()
+ip = args.ip
+port = args.port
+pkt = b'\x00\x00\x00\xc0\xfeSMB@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00$\x00\x08\x00\x01\x00\x00\x00\x7f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00x\x00\x00\x00\x02\x00\x00\x00\x02\x02\x10\x02"\x02$\x02\x00\x03\x02\x03\x10\x03\x11\x03\x00\x00\x00\x00\x01\x00&\x00\x00\x00\x00\x00\x01\x00 \x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\n\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00'
+sock = socket.socket(socket.AF_INET)
+sock.settimeout(3)
+try:
+  sock.connect((ip, port))
+  sock.send(pkt)
+  nb, = struct.unpack(">I", sock.recv(4))
+  res = sock.recv(nb)
+except (BaseException,struct.error) as e:
+  errMsg = "someError scanning %s on port %s " % (ip, port)
+  # einar se la come toda..
+  errMsg += "error was : %s \n" % (str(e))
+  sys.stderr.write(errMsg)
+  sys.exit(1)
+
+exitMsg = "NotVulnerable %s\n" % (ip)
+if not res[68:70] == b"\x11\x03":
+  exit(exitMsg)
+  sys.exit(1)
+if not res[70:72] == b"\x02\x00":
+  exit(exitMsg)
+  sys.exit(1)
+
+exitMsg = "Host with ip %s is vulnerable" % (ip)
+exit(exitMsg)
