@@ -1,7 +1,7 @@
 # SMBGhost
 Simple scanner for CVE-2020-0796 - SMBv3 RCE.
 
-The scanner is for meant only for testing whether a server is vulnerable. It is not meant for research or development, hence the fixed payload. 
+The scanner is meant only for testing whether a server is vulnerable. It is not meant for research or development, hence the fixed payload. 
 
 It checks for SMB dialect 3.1.1 and compression capability through a negotiate request.
 
